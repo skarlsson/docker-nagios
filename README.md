@@ -10,5 +10,21 @@ mail will not work.
 - NAGIOSADMIN_USER=nagiosadmin
 - NAGIOSAMDIN_PASS=nagios
 
+### Building ###
+sudo docker build --force-rm=true -t bpradipt/nagios_ipmi .
+
+### Running ###
+Nagios container mapped to the host IP (0.0.0.0) and port no (80)
+
+$sudo docker run -d -t -p 80:80 image
+
+#Configuration
+sudo docker exec -it container_id bash
+
+
 ### Web UI ###
 The Nagios Web UI is available on port 80 of the container<br />
+
+
+
+

@@ -11,7 +11,9 @@ ENV APACHE_RUN_GROUP nagios
 ENV NAGIOS_TIMEZONE UTC
 
 RUN sed -i 's/universe/universe multiverse/' /etc/apt/sources.list
-RUN apt-get update && apt-get install -y iputils-ping netcat build-essential snmp snmpd snmp-mibs-downloader php5-cli apache2 libapache2-mod-php5 runit bc postfix bsd-mailx
+RUN apt-get update && apt-get install -y iputils-ping netcat build-essential \
+snmp snmpd snmp-mibs-downloader php5-cli apache2 libapache2-mod-php5 runit bc \
+postfix bsd-mailx freeipmi-tools libipc-run-perl git vim svtools
 RUN ( egrep -i  "^${NAGIOS_GROUP}" /etc/group || groupadd $NAGIOS_GROUP ) && ( egrep -i "^${NAGIOS_CMDGROUP}" /etc/group || groupadd $NAGIOS_CMDGROUP )
 RUN ( id -u $NAGIOS_USER || useradd --system $NAGIOS_USER -g $NAGIOS_GROUP -d $NAGIOS_HOME ) && ( id -u $NAGIOS_CMDUSER || useradd --system -d $NAGIOS_HOME -g $NAGIOS_CMDGROUP $NAGIOS_CMDUSER )
 
@@ -19,6 +21,16 @@ ADD http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.5.1/nagi
 RUN cd /tmp && tar -zxvf nagios.tar.gz && cd nagios  && ./configure --prefix=${NAGIOS_HOME} --exec-prefix=${NAGIOS_HOME} --enable-event-broker --with-nagios-command-user=${NAGIOS_CMDUSER} --with-command-group=${NAGIOS_CMDGROUP} --with-nagios-user=${NAGIOS_USER} --with-nagios-group=${NAGIOS_GROUP} && make all && make install && make install-config && make install-commandmode && cp sample-config/httpd.conf /etc/apache2/conf.d/nagios.conf
 ADD http://www.nagios-plugins.org/download/nagios-plugins-1.5.tar.gz /tmp/
 RUN cd /tmp && tar -zxvf nagios-plugins-1.5.tar.gz && cd nagios-plugins-1.5 && ./configure --prefix=${NAGIOS_HOME} && make && make install
+
+#Install check_ipmi_sensor
+#RUN git clone http://git.thomas-krenn.com/check_ipmi_sensor_v3.git /tmp/check_ipmi_sensor
+#RUN cp /tmp/check_ipmi_sensor/check_ipmi_sensor ${NAGIOS_HOME}/libexec/
+RUN wget -O - http://archive.thomas-krenn.com/tk-archive.gpg.pub | sudo apt-key add -
+ADD http://archive.thomas-krenn.com/tk-main.list /etc/apt/sources.list.d/
+ADD http://archive.thomas-krenn.com/tk-optional.list /etc/apt/sources.list.d/
+RUN apt-get update
+RUN apt-get install -y nagios-plugins-thomas-krenn
+
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"; sed -i "s,DocumentRoot.*,$DOC_ROOT," /etc/apache2/sites-enabled/000-default
@@ -34,6 +46,22 @@ RUN download-mibs && echo "mibs +ALL" > /etc/snmp/snmp.conf
 
 RUN sed -i 's,/bin/mail,/usr/bin/mail,' /opt/nagios/etc/objects/commands.cfg && \
   sed -i 's,/usr/usr,/usr,' /opt/nagios/etc/objects/commands.cfg
+
+#Add host configuration for health check
+ADD remotehost.cfg ${NAGIOS_HOME}/etc/objects/
+RUN chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/etc/objects/remotehost.cfg
+
+
+RUN echo "cfg_file=${NAGIOS_HOME}/etc/objects/remotehost.cfg" >> ${NAGIOS_HOME}/etc/nagios.cfg
+
+#Add commands to use for monitoring
+ADD commands_ipmi.cfg /tmp/
+RUN cat /tmp/commands_ipmi.cfg >> ${NAGIOS_HOME}/etc/objects/commands.cfg
+
+#ADD freeipmi config details
+RUN mkdir -p /etc/ipmi-config
+ADD ipmi.cfg /etc/ipmi-config/
+
 RUN cp /etc/services /var/spool/postfix/etc/
 
 RUN mkdir -p /etc/sv/nagios && mkdir -p /etc/sv/apache && rm -rf /etc/sv/getty-5 && mkdir -p /etc/sv/postfix
