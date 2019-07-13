@@ -23,13 +23,13 @@ ADD http://www.nagios-plugins.org/download/nagios-plugins-1.5.tar.gz /tmp/
 RUN cd /tmp && tar -zxvf nagios-plugins-1.5.tar.gz && cd nagios-plugins-1.5 && ./configure --prefix=${NAGIOS_HOME} && make && make install
 
 #Install check_ipmi_sensor
-#RUN git clone http://git.thomas-krenn.com/check_ipmi_sensor_v3.git /tmp/check_ipmi_sensor
-#RUN cp /tmp/check_ipmi_sensor/check_ipmi_sensor ${NAGIOS_HOME}/libexec/
-RUN wget -O - http://archive.thomas-krenn.com/tk-archive.gpg.pub | sudo apt-key add -
-ADD http://archive.thomas-krenn.com/tk-main.list /etc/apt/sources.list.d/
-ADD http://archive.thomas-krenn.com/tk-optional.list /etc/apt/sources.list.d/
-RUN apt-get update
-RUN apt-get install -y nagios-plugins-thomas-krenn
+RUN git clone http://git.thomas-krenn.com/check_ipmi_sensor_v3.git /tmp/check_ipmi_sensor
+RUN cp /tmp/check_ipmi_sensor/check_ipmi_sensor ${NAGIOS_HOME}/libexec/
+#RUN wget -O - http://archive.thomas-krenn.com/tk-archive.gpg.pub | sudo apt-key add -
+#ADD http://archive.thomas-krenn.com/tk-main.list /etc/apt/sources.list.d/
+#ADD http://archive.thomas-krenn.com/tk-optional.list /etc/apt/sources.list.d/
+#RUN apt-get update
+#RUN apt-get install -y nagios-plugins-thomas-krenn
 
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
