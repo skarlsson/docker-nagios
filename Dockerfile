@@ -24,6 +24,7 @@ RUN cd /tmp && tar -zxvf nagios-plugins-1.5.tar.gz && cd nagios-plugins-1.5 && .
 
 #Install check_ipmi_sensor
 RUN wget https://github.com/thomas-krenn/check_ipmi_sensor_v3/blob/master/check_ipmi_sensor -O ${NAGIOS_HOME}/libexec/check_ipmi_sensor
+RUN chmod +x ${NAGIOS_HOME}/libexec/check_ipmi_sensor
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"; sed -i "s,DocumentRoot.*,$DOC_ROOT," /etc/apache2/sites-enabled/000-default
@@ -39,10 +40,6 @@ RUN download-mibs && echo "mibs +ALL" > /etc/snmp/snmp.conf
 
 RUN sed -i 's,/bin/mail,/usr/bin/mail,' /opt/nagios/etc/objects/commands.cfg && \
   sed -i 's,/usr/usr,/usr,' /opt/nagios/etc/objects/commands.cfg
-
-#Add host configuration for health check
-#ADD remotehost.cfg ${NAGIOS_HOME}/etc/objects/
-#RUN chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/etc/objects/remotehost.cfg
 
 RUN mkdir -p ${NAGIOS_HOME}/etc/configmaps
 RUN echo "cfg_file=${NAGIOS_HOME}/etc/configmaps/remotehost.cfg" >> ${NAGIOS_HOME}/etc/nagios.cfg
