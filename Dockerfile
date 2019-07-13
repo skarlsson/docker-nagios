@@ -24,14 +24,6 @@ RUN cd /tmp && tar -zxvf nagios-plugins-1.5.tar.gz && cd nagios-plugins-1.5 && .
 
 #Install check_ipmi_sensor
 RUN wget https://github.com/thomas-krenn/check_ipmi_sensor_v3/blob/master/check_ipmi_sensor -O ${NAGIOS_HOME}/libexec/check_ipmi_sensor
-#RUN git clone http://git.thomas-krenn.com/check_ipmi_sensor_v3.git /tmp/check_ipmi_sensor
-#RUN cp /tmp/check_ipmi_sensor/check_ipmi_sensor /usr/lib/nagios/plugins/check_ipmi_sensor
-#RUN wget -O - http://archive.thomas-krenn.com/tk-archive.gpg.pub | sudo apt-key add -
-#ADD http://archive.thomas-krenn.com/tk-main.list /etc/apt/sources.list.d/
-#ADD http://archive.thomas-krenn.com/tk-optional.list /etc/apt/sources.list.d/
-#RUN apt-get update
-#RUN apt-get install -y nagios-plugins-thomas-krenn
-
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"; sed -i "s,DocumentRoot.*,$DOC_ROOT," /etc/apache2/sites-enabled/000-default
@@ -49,11 +41,11 @@ RUN sed -i 's,/bin/mail,/usr/bin/mail,' /opt/nagios/etc/objects/commands.cfg && 
   sed -i 's,/usr/usr,/usr,' /opt/nagios/etc/objects/commands.cfg
 
 #Add host configuration for health check
-ADD remotehost.cfg ${NAGIOS_HOME}/etc/objects/
-RUN chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/etc/objects/remotehost.cfg
+#ADD remotehost.cfg ${NAGIOS_HOME}/etc/objects/
+#RUN chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/etc/objects/remotehost.cfg
 
-
-RUN echo "cfg_file=${NAGIOS_HOME}/etc/objects/remotehost.cfg" >> ${NAGIOS_HOME}/etc/nagios.cfg
+RUN mkdir -p ${NAGIOS_HOME}/etc/configmaps
+RUN echo "cfg_file=${NAGIOS_HOME}/etc/configmaps/remotehost.cfg" >> ${NAGIOS_HOME}/etc/nagios.cfg
 
 #Add commands to use for monitoring
 ADD commands_ipmi.cfg /tmp/
